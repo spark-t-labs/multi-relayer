@@ -127,6 +127,16 @@ struct Args {
     #[arg(long, env)]
     block_engine_auth_service_url: Option<String>,
 
+    /// Address for Spark Block Engine.
+    /// See https://jito-labs.gitbook.io/mev/searcher-resources/block-engine#connection-details
+    #[arg(long, env)]
+    spark_block_engine_url: Option<String>,
+
+    /// Manual override for authentication service address of the block-engine.
+    /// Defaults to `--spark-block-engine-url`
+    #[arg(long, env)]
+    spark_block_engine_auth_service_url: Option<String>,
+
     /// Path to keypair file used to authenticate with the backend.
     #[arg(long, env)]
     keypair_path: PathBuf,
@@ -362,6 +372,7 @@ fn main() {
     let (block_engine_sender, block_engine_receiver) =
         channel(transaction_relayer::forwarder::BLOCK_ENGINE_FORWARDER_QUEUE_CAPACITY);
 
+    let spark_engine_receiver = block_engine_sender.subscribe();
     let deez_engine_receiver = block_engine_sender.subscribe();
 
     let forward_and_delay_threads = start_forward_and_delay_thread(
@@ -387,9 +398,35 @@ fn main() {
     } else {
         None
     };
+
+
+    let spark_block_engine_config = if !args.disable_mempool && args.spark_block_engine_url.is_some() {
+        let block_engine_url = args.spark_block_engine_url.unwrap();
+        let auth_service_url = args
+            .spark_block_engine_auth_service_url
+            .unwrap_or(block_engine_url.clone());
+        Some(BlockEngineConfig {
+            block_engine_url,
+            auth_service_url,
+        })
+    } else {
+        None
+    };
+
     let block_engine_forwarder = BlockEngineRelayerHandler::new(
         block_engine_config,
         block_engine_receiver,
+        keypair.clone(),
+        exit.clone(),
+        args.aoi_cache_ttl_secs,
+        address_lookup_table_cache.clone(),
+        &is_connected_to_block_engine,
+        ofac_addresses.clone(),
+    );
+
+    let spark_block_engine_forwarder = BlockEngineRelayerHandler::new(
+        spark_block_engine_config,
+        spark_engine_receiver,
         keypair,
         exit.clone(),
         args.aoi_cache_ttl_secs,
@@ -506,6 +543,7 @@ fn main() {
         t.join().unwrap();
     }
     lookup_table_refresher.join().unwrap();
+    spark_block_engine_forwarder.join();
     block_engine_forwarder.join();
     deez_engine_forwarder.join();
 }

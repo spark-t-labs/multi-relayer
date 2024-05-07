@@ -148,7 +148,8 @@ impl DeezEngineRelayerHandler {
                                                 continue;
                                             }
 
-                                            let i: u8 = rand::thread_rng().gen_range(0..3);
+                                            // TODO: throttling spam
+                                            let i: u8 = rand::thread_rng().gen_range(0..5);
                                             if i == 0 {
                                                 let length_bytes = (tx_data.len() as u16).to_le_bytes().to_vec();
                                                 tx_data.reserve(2);

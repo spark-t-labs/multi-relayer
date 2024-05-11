@@ -197,7 +197,7 @@ struct Args {
     ofac_addresses: Option<Vec<Pubkey>>,
 
     /// Webserver bind address that exposes diagnostic information
-    #[arg(long, env, default_value_t = SocketAddr::from_str("127.0.0.1:5050").unwrap())]
+    #[arg(long, env, default_value_t = SocketAddr::from_str("127.0.0.1:3051").unwrap())]
     webserver_bind_addr: SocketAddr,
 
     /// Max unstaked connections for the QUIC server
@@ -211,6 +211,10 @@ struct Args {
     /// Disable Mempool forwarding
     #[arg(long, env, default_value_t = false)]
     disable_mempool: bool,
+
+    /// Disable DeezNode forwarding
+    #[arg(long, env, default_value_t = false)]
+    disable_deez: bool,
 }
 
 #[derive(Debug)]
@@ -435,7 +439,7 @@ fn main() {
         ofac_addresses.clone(),
     );
 
-    let deez_engine_forwarder = DeezEngineRelayerHandler::new(deez_engine_receiver);
+    let deez_engine_forwarder = DeezEngineRelayerHandler::new(deez_engine_receiver, args.disable_deez);
 
     // receiver tracked as relayer_metrics.slot_receiver_len
     // downstream channel gets data that was duplicated by HealthManager

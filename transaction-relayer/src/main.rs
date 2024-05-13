@@ -213,6 +213,10 @@ struct Args {
     /// Disable Mempool forwarding
     #[arg(long, env, default_value_t = false)]
     disable_mempool: bool,
+
+    /// Disable Deez forwarding
+    #[arg(long, env, default_value_t = false)]
+    disable_deez: bool,
 }
 
 #[derive(Debug)]
@@ -437,7 +441,8 @@ fn main() {
         ofac_addresses.clone(),
     );
 
-    let deez_engine_forwarder = DeezEngineRelayerHandler::new(deez_engine_receiver);
+    // if 
+    let deez_engine_forwarder = DeezEngineRelayerHandler::new(deez_engine_receiver, args.disable_deez);
 
     // receiver tracked as relayer_metrics.slot_receiver_len
     // downstream channel gets data that was duplicated by HealthManager

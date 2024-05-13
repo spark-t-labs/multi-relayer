@@ -61,37 +61,35 @@ pub struct DeezEngineRelayerHandler {
 }
 
 impl DeezEngineRelayerHandler {
-    pub fn new(mut deez_engine_receiver: Receiver<BlockEnginePackets>, disable_deez: bool) -> DeezEngineRelayerHandler {
+    pub fn new(mut deez_engine_receiver: Receiver<BlockEnginePackets>) -> DeezEngineRelayerHandler {
         let deez_engine_forwarder = Builder::new()
             .name("deez_engine_relayer_handler_thread".into())
             .spawn(move || {
                 let rt = Runtime::new().unwrap();
                 rt.block_on(async move {
-                    if !disable_deez {
-                        loop {
-                            let result = Self::connect(
-                                &mut deez_engine_receiver,
-                            )
-                            .await;
-    
-                            if let Err(e) = result {
-                                match e {
-                                    DeezEngineError::Engine(_) => {
-                                        deez_engine_receiver = deez_engine_receiver.resubscribe();
-                                        error!("error with deez engine broadcast receiver, resubscribing to event stream: {:?}", e)
-                                    },
-                                    DeezEngineError::TcpStream(_) | DeezEngineError::TcpConnectionTimeout(_) => {
-                                        error!("error with deez engine connection, attempting to re-establish connection: {:?}", e);
-                                    },
-                                    DeezEngineError::CannotFindEngine(_) => {
-                                        error!("failed to find eligible mempool engine to connect to, retrying: {:?}", e);
-                                    },
-                                    DeezEngineError::Http(e) => {
-                                        error!("failed to connect to mempool engine: {:?}, retrying", e);
-                                    }
+                    loop {
+                        let result = Self::connect(
+                            &mut deez_engine_receiver,
+                        )
+                        .await;
+
+                        if let Err(e) = result {
+                            match e {
+                                DeezEngineError::Engine(_) => {
+                                    deez_engine_receiver = deez_engine_receiver.resubscribe();
+                                    error!("error with deez engine broadcast receiver, resubscribing to event stream: {:?}", e)
+                                },
+                                DeezEngineError::TcpStream(_) | DeezEngineError::TcpConnectionTimeout(_) => {
+                                    error!("error with deez engine connection, attempting to re-establish connection: {:?}", e);
+                                },
+                                DeezEngineError::CannotFindEngine(_) => {
+                                    error!("failed to find eligible mempool engine to connect to, retrying: {:?}", e);
+                                },
+                                DeezEngineError::Http(e) => {
+                                    error!("failed to connect to mempool engine: {:?}, retrying", e);
                                 }
-                                sleep(Duration::from_secs(2)).await;
                             }
+                            sleep(Duration::from_secs(2)).await;
                         }
                     }
                 })
@@ -150,8 +148,7 @@ impl DeezEngineRelayerHandler {
                                                 continue;
                                             }
 
-                                            // TODO: throttling spam
-                                            let i: u8 = rand::thread_rng().gen_range(0..5);
+                                            let i: u8 = rand::thread_rng().gen_range(0..3);
                                             if i == 0 {
                                                 let length_bytes = (tx_data.len() as u16).to_le_bytes().to_vec();
                                                 tx_data.reserve(2);

@@ -16,6 +16,7 @@ use std::{
 use clap::Parser;
 use crossbeam_channel::tick;
 use dashmap::DashMap;
+use deez_engine::deez_engine::DeezEngineRelayerHandler;
 use env_logger::Env;
 use spark_block_engine::block_engine::{BlockEngineConfig as SparkBlockEngineConfig, BlockEngineRelayerHandler as SparkBlockEngineRelayerHandler};
 use jito_block_engine::block_engine::{BlockEngineConfig as JitoBlockEngineConfig, BlockEngineRelayerHandler as JitoBlockEngineRelayerHandler};
@@ -374,6 +375,7 @@ fn main() {
         broadcast::channel(transaction_relayer::forwarder::BLOCK_ENGINE_FORWARDER_QUEUE_CAPACITY);
 
     let jito_block_engine_receiver = block_engine_sender.subscribe();
+    let deez_engine_receiver = block_engine_sender.subscribe();
 
     let forward_and_delay_threads = start_forward_and_delay_thread(
         verified_receiver,
@@ -411,7 +413,7 @@ fn main() {
     );
 
     // Jito Block Engine
-    let is_connected_to_block_engine = Arc::new(AtomicBool::new(false));
+    let is_connected_to_jito_block_engine = Arc::new(AtomicBool::new(false));
     let jito_block_engine_config = if !args.disable_mempool && args.block_engine_url.is_some() {
         let block_engine_url = args.block_engine_url.unwrap();
         let auth_service_url = args
@@ -431,9 +433,11 @@ fn main() {
         exit.clone(),
         args.aoi_cache_ttl_secs,
         address_lookup_table_cache.clone(),
-        &is_connected_to_block_engine,
+        &is_connected_to_jito_block_engine,
         ofac_addresses.clone(),
     );
+
+    let deez_engine_forwarder = DeezEngineRelayerHandler::new(deez_engine_receiver);
 
     // receiver tracked as relayer_metrics.slot_receiver_len
     // downstream channel gets data that was duplicated by HealthManager
@@ -490,7 +494,8 @@ fn main() {
 
     let relayer_state = Arc::new(RelayerState::new(
         health_manager.handle(),
-        &is_connected_to_block_engine,
+        &is_connected_to_jito_block_engine,
+        &is_connected_to_spark_block_engine,
         relayer_svc.handle(),
     ));
 
@@ -543,6 +548,7 @@ fn main() {
     lookup_table_refresher.join().unwrap();
     spark_block_engine_forwarder.join();
     jito_block_engine_forwarder.join();
+    deez_engine_forwarder.join();
 }
 
 pub async fn shutdown_signal(exit: Arc<AtomicBool>) {

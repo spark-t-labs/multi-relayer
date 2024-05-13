@@ -19,19 +19,22 @@ use tower::{buffer::BufferLayer, limit::RateLimitLayer, ServiceBuilder};
 /// State object that exposes info inside relayer
 pub struct RelayerState {
     slot_health: Arc<RwLock<HealthState>>,
-    is_connected_to_block_engine: Arc<AtomicBool>,
+    is_connected_to_jito_block_engine: Arc<AtomicBool>,
+    is_connected_to_spark_block_engine: Arc<AtomicBool>,
     relayer_handle: RelayerHandle,
 }
 
 impl RelayerState {
     pub fn new(
         slot_health: Arc<RwLock<HealthState>>,
-        is_connected_to_block_engine: &Arc<AtomicBool>,
+        is_connected_to_jito_block_engine: &Arc<AtomicBool>,
+        is_connected_to_spark_block_engine: &Arc<AtomicBool>,
         relayer_handle: RelayerHandle,
     ) -> RelayerState {
         RelayerState {
             slot_health,
-            is_connected_to_block_engine: is_connected_to_block_engine.clone(),
+            is_connected_to_jito_block_engine: is_connected_to_jito_block_engine.clone(),
+            is_connected_to_spark_block_engine: is_connected_to_spark_block_engine.clone(),
             relayer_handle,
         }
     }
@@ -40,7 +43,8 @@ impl RelayerState {
 #[derive(Serialize, Debug)]
 pub struct RelayerStatus {
     slots_healthy: bool,
-    is_connected_to_block_engine: bool,
+    is_connected_to_jito_block_engine: bool,
+    is_connected_to_spark_block_engine: bool,
     validators_connected: Vec<String>,
 }
 
@@ -57,8 +61,9 @@ pub fn build_relayer_router(
     /// Returns a simple string for relayer health
     async fn get_health(Extension(state): Extension<Arc<RelayerState>>) -> String {
         let slots_healthy = *state.slot_health.read().unwrap() == HealthState::Healthy;
-        let is_connected_to_block_engine =
-            state.is_connected_to_block_engine.load(Ordering::Relaxed);
+        let is_connected_to_block_engine = state
+            .is_connected_to_spark_block_engine
+            .load(Ordering::Relaxed);
 
         let health = if slots_healthy && is_connected_to_block_engine {
             "ok".to_string()
@@ -74,8 +79,11 @@ pub fn build_relayer_router(
     async fn get_status(Extension(state): Extension<Arc<RelayerState>>) -> Json<RelayerStatus> {
         let status = RelayerStatus {
             slots_healthy: *state.slot_health.read().unwrap() == HealthState::Healthy,
-            is_connected_to_block_engine: state
-                .is_connected_to_block_engine
+            is_connected_to_jito_block_engine: state
+                .is_connected_to_jito_block_engine
+                .load(Ordering::Relaxed),
+            is_connected_to_spark_block_engine: state
+                .is_connected_to_spark_block_engine
                 .load(Ordering::Relaxed),
             validators_connected: state
                 .relayer_handle

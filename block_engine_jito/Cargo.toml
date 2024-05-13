@@ -1,5 +1,5 @@
 [package]
-name = "block-engine"
+name = "jito-block-engine"
 description = "Relayer Block Engine Client"
 version = { workspace = true }
 authors = { workspace = true }

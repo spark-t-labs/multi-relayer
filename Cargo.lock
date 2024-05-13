@@ -731,6 +731,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "block-engine"
+version = "0.1.8"
+dependencies = [
+ "cached",
+ "dashmap 5.5.3",
+ "jito-core",
+ "jito-protos",
+ "log",
+ "prost-types 0.12.3",
+ "solana-core",
+ "solana-metrics",
+ "solana-perf",
+ "solana-sdk",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tonic 0.10.2",
+]
+
+[[package]]
 name = "block-padding"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

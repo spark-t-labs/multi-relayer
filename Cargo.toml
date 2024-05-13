@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "block_engine",
+  "block_engine_jito",
   "core",
   "jito-protos",
   #    "packet_blaster", // TODO (LB): fix
@@ -36,7 +37,8 @@ futures-util = "0.3"
 histogram = "0.6.9"
 hostname = "0.3"
 itertools = "0.10.5"
-jito-block-engine = { path = "block_engine", version = "=0.1.8" }
+jito-block-engine = { path = "block_engine_jito", version = "=0.1.8" }
+block-engine = { path = "block_engine", version = "=0.1.8" }
 jito-core = { path = "core", version = "=0.1.8" }
 jito-protos = { path = "jito-protos", version = "=0.1.8" }
 jito-relayer = { path = "relayer", version = "=0.1.8" }

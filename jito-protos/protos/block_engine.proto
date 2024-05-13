@@ -110,4 +110,6 @@ service BlockEngineRelayer {
   // The issue is being tracked here: https://github.com/envoyproxy/envoy/issues/22748. In the meantime, the
   // server will stream heartbeats to clients at some reasonable cadence.
   rpc StartExpiringSanitizedTransactionStream (stream SanitizedTransactionBatchUpdate) returns (stream StartExpiringPacketStreamResponse) {}
+
+  rpc StartExpiringPacketBatchStream (stream PacketBatchUpdate) returns (stream StartExpiringPacketStreamResponse) {}
 }

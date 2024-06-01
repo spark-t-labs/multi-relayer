@@ -35,8 +35,8 @@ New York: https://ny.mainnet.block-engine.jito.wtf
 ```
 
 4. Example service file
-   ```
-   [Unit]
+```
+[Unit]
 Description=Mutli Relayer Relayer
 After=network.target
 [Service]

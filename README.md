@@ -42,7 +42,7 @@ After=network.target
 [Service]
 User=root
 Type=simple
-ExecStart=/root/forge-relayer/target/release/transaction-relayer --keypair-path /root/relayer-config/relayer.json --signing-key-pem-path /root/relayer-config/auth --verifying-key-pem-path /root/relayer-config/auth.pub  --spark-block-engine-url SPARK-T_ENGINE --rpc-servers YOUR RPC SERVER  --websocket-servers YOUR WS RPC SERVER --webserver-bind-addr "0.0.0.0:5050"
+ExecStart=/root/multi-relayer/target/release/transaction-relayer --keypair-path /root/relayer-config/relayer.json --signing-key-pem-path /root/relayer-config/auth --verifying-key-pem-path /root/relayer-config/auth.pub  --spark-block-engine-url SPARK-T_ENGINE --rpc-servers YOUR RPC SERVER  --websocket-servers YOUR WS RPC SERVER --webserver-bind-addr "0.0.0.0:5050"
 RestartSec=10
 Restart=on-failure
 LimitNOFILE=1000000
